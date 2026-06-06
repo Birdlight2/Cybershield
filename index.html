@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberShield - Terminal Birdlight</title>
+    <style>
+        /* Styles simples et lisibles de niveau débutant */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f6fa;
+            color: #2f3640;
+            padding: 20px;
+        }
+        .conteneur {
+            max-width: 900px;
+            margin: auto;
+        }
+        header {
+            background-color: #2f3542;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .bloc {
+            background-color: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .zone-urgence {
+            background-color: #ffeaa7;
+            border: 2px dashed #f1c40f;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .liste-cartes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .carte {
+            background-color: white;
+            padding: 15px;
+            width: 260px;
+            border-radius: 4px;
+            border: 1px solid #dcdde1;
+        }
+        
+        /* Les codes couleurs demandés par le cahier des charges */
+        .statut-nouveau { border-left: 6px solid #e84118; } /* Rouge */
+        .statut-analyse { border-left: 6px solid #00a8ff; } /* Bleu */
+        .statut-cloture { border-left: 6px solid #4cd137; } /* Vert */
+        
+        .badge-phishing { background-color: #e67e22; color: white; padding: 3px; font-size: 12px; } /* Orange */
+        .badge-fraude { background-color: #e84118; color: white; padding: 3px; font-size: 12px; }    /* Rouge */
+        .badge-usurpation { background-color: #7f8c8d; color: white; padding: 3px; font-size: 12px; }  /* Gris */
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #2f3542;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #57606f;
+        }
+        .btn-petit {
+            width: auto;
+            padding: 5px;
+            font-size: 12px;
+            background-color: #718093;
+        }
+    </style>
+</head>
+<body>
+
+<div class="conteneur">
+    <header>
+        <h2>🛡️ Application CyberShield</h2>
+        <p>Projet de Première Année développé par Birdlight</p>
+        <p style="font-size: 13px;">Zone d'étude : Pointe-Noire / Spécifications de Mr Webster</p>
+    </header>
+
+    <div class="bloc">
+        <h3>1. Déposer un nouveau signalement (Vue Mobile)</h3>
+        <form id="monFormulaire" onsubmit="ajouterNouveauSignalement(event)">
+            <label>Quartier où s'est produite l'arnaque :</label>
+            <input type="text" id="champQuartier" placeholder="Ex: Tié-Tié, Mpaka, Lumumba..." required>
+            
+            <label>Type de cyber-escroquerie :</label>
+            <select id="champType">
+                <option value="Phishing">Phishing (Orange)</option>
+                <option value="Fraude Financière">Fraude Financière (Rouge)</option>
+                <option value="Usurpation d'identité">Usurpation d'identité (Gris)</option>
+            </select>
+            
+            <label>Description de l'arnaque (numéros de téléphone, liens suspects) :</label>
+            <textarea id="champDescription" rows="3" placeholder="Donnez des détails ici..." required></textarea>
+            
+            <label>Preuve (Capture d'écran au format JPEG ou PNG uniquement) :</label>
+            <input type="file" id="champFichier" accept="image/png, image/jpeg" required>
+            
+            <button type="submit" style="background-color: #4cd137;">Envoyer le signalement à la brigade</button>
+        </form>
+    </div>
+
+    <div class="zone-urgence">
+        <h4>📌 Dossiers Urgents Marqués (Sauvegardés dans le localStorage)</h4>
+        <div class="liste-cartes" id="affichageUrgents">
+            <p style="color: #7f8c8d; font-size: 13px;">Aucun dossier urgent sélectionné.</p>
+        </div>
+    </div>
+
+    <div class="bloc">
+        <h3>2. Espace Enquêteurs : Flux de tous les dossiers</h3>
+        <div class="liste-cartes" id="affichageFlux">
+            </div>
+    </div>
+</div>
+
+<script>
+    // Tableau de 15 données de test écrit manuellement pour Pointe-Noire
+    const mesSignalements = [
+        { id: 1, quartier: "Tié-Tié", type: "Usurpation d'identité", badgeColor: "badge-usurpation", statut: "Nouveau", bordureColor: "statut-nouveau", desc: "Faux profil Facebook vendant des téléphones sur Tié-Tié." },
+        { id: 2, quartier: "Mpaka", type: "Phishing", badgeColor: "badge-phishing", statut: "En cours d'analyse", bordureColor: "statut-analyse", desc: "Lien de phishing reçu par WhatsApp à Mpaka usurpant Mobile Money." },
+        { id: 3, quartier: "Lumumba", type: "Fraude Financière", badgeColor: "badge-fraude", statut: "Clôturé / Transmis", bordureColor: "statut-cloture", desc: "Arnaque au dépôt de fonds à Lumumba via un faux agent." },
+        { id: 4, quartier: "Grand Marché", type: "Phishing", badgeColor: "badge-phishing", statut: "Nouveau", bordureColor: "statut-nouveau", desc: "SMS frauduleux reçu demandant de mettre à jour d'urgence ses accès bancaires." },
+        { id: 5, quartier: "Tié-Tié", type: "Fraude Financière", badgeColor: "badge-fraude", statut: "En cours d'analyse", bordureColor: "statut-analyse", desc: "SMS de faux gains de loterie réclamant l'envoi préalable de frais mobiles." },
+        { id: 6, quartier: "Mpaka", type: "Usurpation d'identité", badgeColor: "badge-usurpation", statut: "Nouveau", bordureColor: "statut-nouveau", desc: "Piratage complet d'un compte WhatsApp d'un commerçant de la zone." },
+        { id: 7, quartier: "Ngoyo", type: "Phishing", badgeColor: "badge-phishing", statut: "Nouveau", bordureColor: "statut-nouveau", desc: "Fausse page Internet mobile configurée pour voler du crédit de communication." },
+        { id: 8, quartier: "Lumumba", type: "Fraude Financière", badgeColor: "badge-fraude", statut: "Clôturé / Transmis", bordureColor: "statut-cloture", desc: "Placement frauduleux promettant des intérêts irréalistes sur Internet." },
+        { id: 9, quartier: "Fond Tié-Tié", type: "Usurpation d'identité", badgeColor: "badge-usurpation", statut: "En cours d'analyse", bordureColor: "statut-analyse", desc: "Escroc volant la photo d'un habitant pour soutirer de l'argent aux proches." },
+        { id: 10, quartier: "Grand Marché", type: "Phishing", badgeColor: "badge-phishing", statut: "Nouveau", bordureColor: "statut-nouveau", desc: "Faux e-mail d'un fournisseur d'énergie exigeant un règlement par coupon." },
+        { id: 11, quartier: "Ngoyo", type: "Fraude Financière", badgeColor: "badge-fraude", statut: "Nouveau", bordureColor: "statut-nouveau", desc: "Faux conseiller tontine opérant clandestinement sur les réseaux sociaux." },
+        { id: 12, quartier: "Mpaka", type: "Phishing", badgeColor: "badge-phishing", statut: "En cours d'analyse", bordureColor: "statut-analyse", desc: "Lien frauduleux imitant parfaitement le portail d'un opérateur Mobile Money." },
+        { id: 13, quartier: "Tié-Tié", type: "Usurpation d'identité", badgeColor: "badge-usurpation", statut: "Clôturé / Transmis", bordureColor: "statut-cloture", desc: "Faux compte Instagram usurpant le logo d'une boutique locale de vêtements." },
+        { id: 14, quartier: "Lumumba", type: "Phishing", badgeColor: "badge-phishing", statut: "Nouveau", bordureColor: "statut-nouveau", desc: "Message d'alerte de sécurité mobile factice poussant à appeler un numéro surtaxé." },
+        { id: 15, quartier: "Grand Marché", type: "Fraude Financière", badgeColor: "badge-fraude", statut: "En cours d'analyse", bordureColor: "statut-analyse", desc: "Vente en ligne de faux billets d'événement avec encaissement Mobile Money fictif." }
+    ];
+
+    // Fonction de base pour afficher la liste des dossiers
+    function dessinerDashboard() {
+        const zoneFlux = document.getElementById('affichageFlux');
+        zoneFlux.innerHTML = ""; // On vide la zone avant de la remplir
+        
+        for (let i = 0; i < mesSignalements.length; i++) {
+            const dossier = mesSignalements[i];
+            zoneFlux.innerHTML += `
+                <div class="carte ${dossier.bordureColor}">
+                    <span class="badge ${dossier.badgeColor}">${dossier.type}</span>
+                    <h5>Dossier #${dossier.id}</h5>
+                    <p><strong>Quartier :</strong> ${dossier.quartier}</p>
+                    <p><strong>Statut :</strong> ${dossier.statut}</p>
+                    <p style="font-size:12px; color:#555;">${dossier.desc}</p>
+                    <button class="btn-petit" onclick="actionDrapeau(${dossier.id})">🚩 Épingler / Enlever</button>
+                </div>
+            `;
+        }
+    }
+
+    // Gestion simplifiée du localStorage avec des IDs
+    function actionDrapeau(idRecu) {
+        let listeIds = JSON.parse(localStorage.getItem('sauvegarde_urgents')) || [];
+        
+        // Si l'id est déjà présent, on le retire, sinon on l'ajoute
+        if (listeIds.includes(idRecu)) {
+            listeIds = listeIds.filter(id => id !== idRecu);
+        } else {
+            listeIds.push(idRecu);
+        }
+        
+        localStorage.setItem('sauvegarde_urgents', JSON.stringify(listeIds));
+        dessinerUrgents();
+    }
+
+    function dessinerUrgents() {
+        const zoneUrgents = document.getElementById('affichageUrgents');
+        let listeIds = JSON.parse(localStorage.getItem('sauvegarde_urgents')) || [];
+        
+        if (listeIds.length === 0) {
+            zoneUrgents.innerHTML = `<p style="color: #7f8c8d; font-size: 13px;">Aucun dossier urgent sélectionné.</p>`;
+            return;
+        }
+        
+        zoneUrgents.innerHTML = "";
+        for (let i = 0; i < listeIds.length; i++) {
+            const idCherche = listeIds[i];
+            
+            // On cherche l'objet correspondant à cet ID
+            let dossierTrouve = null;
+            for (let j = 0; j < mesSignalements.length; j++) {
+                if (mesSignalements[j].id === idCherche) {
+                    dossierTrouve = mesSignalements[j];
+                }
+            }
+            
+            if (dossierTrouve !== null) {
+                zoneUrgents.innerHTML += `
+                    <div class="carte ${dossierTrouve.bordureColor}" style="border: 2px solid #f1c40f;">
+                        <span class="badge ${dossierTrouve.badgeColor}">${dossierTrouve.type}</span>
+                        <h5>🚨 DOSSIER CHAUD #${dossierTrouve.id}</h5>
+                        <p><strong>Quartier :</strong> ${dossierTrouve.quartier}</p>
+                        <p style="font-size:12px;">${dossierTrouve.desc}</p>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Gestion de l'envoi du formulaire (Simulation de l'API avec push)
+    function ajouterNouveauSignalement(evenement) {
+        evenement.preventDefault(); // Empêche la page de se recharger
+        
+        const quartierInput = document.getElementById('champQuartier').value;
+        const typeSelect = document.getElementById('champType').value;
+        const descText = document.getElementById('champDescription').value;
+        const fichierNom = document.getElementById('champFichier').value;
+
+        // Vérification de sécurité basique sur l'extension demandée par l'énoncé
+        if (!fichierNom.endsWith('.png') && !fichierNom.endsWith('.jpg') && !fichierNom.endsWith('.jpeg')) {
+            alert("Erreur de format : Seuls les fichiers PNG, JPG et JPEG sont autorisés !");
+            return;
+        }
+
+        let couleurBadge = "badge-phishing";
+        if (typeSelect === "Fraude Financière") couleurBadge = "badge-fraude";
+        if (typeSelect === "Usurpation d'identité") couleurBadge = "badge-usurpation";
+
+        // Ajout au début du tableau pour simuler une insertion en base de données
+        mesSignalements.unshift({
+            id: mesSignalements.length + 1,
+            quartier: quartierInput,
+            type: typeSelect,
+            badgeColor: couleurBadge,
+            statut: "Nouveau",
+            bordureColor: "statut-nouveau",
+            desc: descText
+        });
+
+        // Génération du code de suivi de l'arnaque
+        const nombreAleatoire = Math.floor(Math.random() * 9000) + 1000;
+        alert("Signalement enregistré ! Votre code de suivi secret est : SHIELD-" + nombreAleatoire);
+        
+        document.getElementById('monFormulaire').reset(); // On vide le formulaire
+        dessinerDashboard(); // On recharge l'affichage
+    }
+
+    // Lancement automatique à l'ouverture de l'application
+    window.onload = function() {
+        dessinerDashboard();
+        dessinerUrgents();
+    };
+</script>
+</body>
+</html>
